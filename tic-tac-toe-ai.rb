@@ -1,12 +1,9 @@
-class Array
-	def my_transposed
-		t_arr = Array.new(self[0].length) {Array.new(self.length)}
-		self.each_with_index{ |i, i_index| i.each_with_index{|j, j_index| t_arr[j_index][i_index] = j} }
-		return t_arr
-	end
-end
 
+module TicTacToe
+	MARKS = [false, true]
+end
 class Board
+	include TicTacToe
 	attr_reader :winner, :n
 	def initialize(n = 3)
 		@n = n
@@ -19,7 +16,7 @@ class Board
 		@n.times{|i| diag[0][i] = @spots[i][i]}
 		@n.times{|i| diag[1][i] = @spots[i][@n - i]}
 		@spots.each{|i| @winner = i[0] if i.uniq.length == 1 && i[0] != nil}
-		@spots.my_transposed.each{|i| @winner = i[0] if i.uniq.length == 1 && i[0] != nil}
+		@spots.transpose.each{|i| @winner = i[0] if i.uniq.length == 1 && i[0] != nil}
 		diag.each{|i| @winner = i[0] if i.uniq.length == 1 && i[0] != nil}
 		return @winner? true : false
 	end
@@ -30,7 +27,7 @@ class Board
 	def empty?(pos)
 		i = pos / @n
 		j = pos % @n
-		!@spots[i][j]
+		@spots[i][j].nil?
 	end
 
 	def place_mark(pos, mark)
@@ -46,6 +43,7 @@ class Board
 end
 
 class Game
+	include TicTacToe
 	def initialize(player_1, player_2)
 		if player_1.class == HumanPlayer
 			@player_1 = player_1
@@ -55,7 +53,7 @@ class Game
 			@player_2 = player_1
 		end
 		@board = Board.new
-		@marks = [0, 1]
+		@marks = TicTacToe::MARKS
 	end
 
 	def play
@@ -112,8 +110,26 @@ class ComputerPlayer < Player
 	end
 end
 
+class TicTacToeNode
+	attr_reader :next_mover_mark, :prev_move_pos
+	def initialize(board, next_mover_mark, prev_move_pos)
+		@board = board
+		@next_mover_mark = next_mover_mark
+		@prev_move_pos = prev_move_pos
+	end
+
+	def children
+		npos = @board.n * @board.n
+		potential_states = (0...npos).select{|pos| @board.empty?(pos)}.
+							map{|available_pos| TicTacToeNode.new(@board.dup, !next_mover_mark, available_pos)}
+	end
+end
+
 human_player = HumanPlayer.new("Ananias")
 cpu1_player = ComputerPlayer.new
 cpu2_player = ComputerPlayer.new
 tic_tac_toe = Game.new(cpu1_player, cpu2_player)
 tic_tac_toe.play
+b = Board.new
+tttn = TicTacToeNode.new(b, true, nil)
+tttn.children
