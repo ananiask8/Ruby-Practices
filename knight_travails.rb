@@ -48,7 +48,13 @@ class PolyTreeNode
 	end
 
 	def trace_path_back
-
+		node = self
+		path = [self.value]
+		until node.parent.nil?
+			node = node.parent
+			path << node.value
+		end
+		path.reverse
 	end
 
 	protected
@@ -68,13 +74,13 @@ end
 
 class KnightPathFinder
 	def initialize(from)
-		@from = from
-		p @visited_positions = [from]
+		@from = PolyTreeNode.new(from)
+		@visited_positions = [from]
 		@move_tree = build_move_tree
 	end
 
 	def build_move_tree
-		queue = [PolyTreeNode.new(@from)]
+		queue = [@from]
 		until queue.empty?
 			node = queue.shift
 			node_children = new_move_positions(node.value).map{|child| PolyTreeNode.new(child)}
@@ -84,7 +90,7 @@ class KnightPathFinder
 	end
 
 	def find_path(to)
-
+		@from.dfs(to){|a, b| a == b}.trace_path_back
 	end
 
 	# protected
@@ -97,8 +103,8 @@ class KnightPathFinder
 
 	def self.valid_moves(pos)
 		valid_moves = []
-		([1, 3]).each do |i|
-			j = 4 - i
+		([1, 2]).each do |i|
+			j = 3 - i
 			valid_moves += permute_moves(pos, i, j)	
 		end
 		valid_moves
@@ -122,5 +128,5 @@ class KnightPathFinder
 end
 
 kpf = KnightPathFinder.new([0, 0])
-# kpf.find_path([7, 6])
-# kpf.find_path([6, 2])
+p kpf.find_path([7, 6])
+p kpf.find_path([6, 2])
