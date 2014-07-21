@@ -73,6 +73,7 @@ class PolyTreeNode
 end
 
 class KnightPathFinder
+	attr_reader :from
 	def initialize(from)
 		@from = PolyTreeNode.new(from)
 		@visited_positions = [from]
@@ -93,10 +94,10 @@ class KnightPathFinder
 		@from.dfs(to){|a, b| a == b}.trace_path_back
 	end
 
-	# protected
+	protected
 
 	def new_move_positions(pos)
-		new_moves = KnightPathFinder::valid_moves(pos).reject{|pos| @visited_positions.include?(pos)}
+		new_moves = KnightPathFinder.valid_moves(pos).reject{|pos| @visited_positions.include?(pos)}
 		@visited_positions += new_moves
 		new_moves
 	end
