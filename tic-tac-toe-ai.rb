@@ -122,18 +122,38 @@ class TicTacToeNode
 
 	def children
 		npos = @board.n * @board.n
-		potential_states = (0...npos).select{|pos| @board.empty?(pos)}.
+		@potential_states = (0...npos).select{|pos| @board.empty?(pos)}.
 					map{|available_pos| TicTacToeNode.new(@board.dup.
 					place_mark(available_pos, next_mover_mark), 
 					!next_mover_mark, available_pos)}
 	end
 
 	def losing_node?(player)
-		
+		@board.filled? && @board.win? != player.mark ||
+		players_turn?(player) && !any_winning_children?(player) ||
+		!players_turn?(player) && any_losing_children?(player)
 	end
 
 	def winning_node?(player)
+		@board.filled? && @board.win? == player.mark ||
+		players_turn?(player) && any_winning_children?(player) ||
+		!players_turn?(player) && !any_losing_children?(player)
+	end
 
+	def players_turn?(player)
+		next_mover_mark == player.mark
+	end
+
+	def any_winning_children?(player)
+		result = false
+		@potential_states.each{|child| result ||= child.winning_node?(player)}
+		result
+	end
+
+	def any_losing_children?(player)
+		result = false
+		@potential_states.each{|child| result ||= child.losing_node?(player)}
+		result
 	end
 end
 
