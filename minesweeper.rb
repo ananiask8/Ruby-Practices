@@ -22,7 +22,7 @@ class Tile
 	end
 
 	def self.set_difficulty(difficulty)
-		@@prob_bombs = BOMBS_FRACTION[difficulty] / 100
+		@@prob_bombs = BOMBS_FRACTION[difficulty] / 100.0
 	end
 
 	def bombed?
@@ -31,7 +31,7 @@ class Tile
 
 	def set_type
 		@type ||= rand() < @@prob_bombs ? BOMB : INTERIOR
-		@neighbors.each{|tile| tile._neighbor_bomb_count += 1} if @type == BOMB
+		@neighbors.each{|tile| tile._neighbor_bomb_count = tile.neighbor_bomb_count + 1} if @type == BOMB
 	end
 
 	def flagged?
@@ -47,12 +47,13 @@ class Tile
 			if type == FLAGGED
 				@state = type
 			else
-				p @neighbor_bomb_count
-				if @neighbor_bomb_count == 0
-					@state = @type
-					@neighbors.reject{|tile| tile.revealed?}.each{|tile| tile.reveal(type)}
-				else
-					@state = @neighbor_bomb_count.to_s
+				@state = @type
+				unless @type == BOMB
+					if @neighbor_bomb_count == 0
+						@neighbors.reject{|tile| tile.revealed?}.each{|tile| tile.reveal(type)}
+					else
+						@state = @neighbor_bomb_count.to_s
+					end
 				end
 			end
 		end
@@ -91,7 +92,11 @@ class Board
 	end
 
 	def results
-		puts "You lose... punny human..."
+		if any?{|tile| tile.bombed?}
+			puts "You lose, punny human..."
+		else
+			puts "You win... surprisingly clever human... I think you must be a bot."
+		end
 	end
 
 	protected
