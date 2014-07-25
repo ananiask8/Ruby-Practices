@@ -83,8 +83,6 @@ class Board
 
 	def make_move
 		@paused = false
-		instructions
-		draw_board
 		input = $stdin.gets.chomp
 		move = parse_move(input)
 
@@ -100,7 +98,6 @@ class Board
 
 		px, py = move[:coords][0].to_i - 1, move[:coords][1].to_i - 1
 		@board[py][px].reveal(move[:type])
-		draw_board
 	end
 
 	def results
@@ -113,6 +110,15 @@ class Board
 
 	def game_over?
 		any?{|tile| tile.bombed?} || all?{|tile| tile.flagged? || tile.revealed?}
+	end
+
+	def draw_board
+		state = " "
+		@n.order_of_magnitude(10).times{state << " "}
+		state << (1..@n).to_a.join('|') << "\n"
+		state << @board.map.with_index{|row, j| "#{j + 1} ".concat row.map{|tile| tile.state}.join('|')}.join("\n")
+		puts state
+		instructions
 	end
 
 	protected
@@ -143,21 +149,14 @@ class Board
 		end
 	end
 
-	def draw_board
-		state = " "
-		@n.order_of_magnitude(10).times{state << " "}
-		state << (1..@n).to_a.join('|') << "\n"
-		state << @board.map.with_index{|row, j| "#{j + 1} ".concat row.map{|tile| tile.state}.join('|')}.join("\n")
-		puts state
-	end
-
 	def parse_move(line)
 		move = line.scan(PARSING_REGEXP).flatten
+		p move
 		{:coords => [move[0], move[1]], :type => move[2]}
 	end
 
 	def valid_move?(move)
-		!((move[:coords].length != 2 || move[:coords][0] =~ /^[0-9]$/).nil? || (move[:coords][1] =~ /^[0-9]$/).nil? || move[:type].nil?)
+		!((move[:coords][0] =~ /^[0-9]$/).nil? || (move[:coords][1] =~ /^[0-9]$/).nil? || move[:type].nil?)
 	end
 
 	def in_range?(pos)
@@ -187,6 +186,7 @@ class Minesweeper
 	def run
 		@board.paused = false
 		until @board.game_over? || @board.paused
+			@board.draw_board
 			@board.make_move
 		end
 		if @board.paused
