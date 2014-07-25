@@ -10,7 +10,16 @@ class Minesweeper
 		@difficulty = difficulty
 		create_board
 		seed_board
+		instructions
 	end
+
+	def run
+		until game_over
+			play = make_move
+			reveal(play)
+		end
+	end
+
 
 # protected
 	def create_board
@@ -30,9 +39,45 @@ class Minesweeper
 		end
 	end
 
+	def instructions
+		puts "Take an action on the '(x, y)' position. After a blank space, type 'f' to flag and 'r' to reveal."
+	end
+
 	def draw_board
-		state = @board[:status].map{|row| row.join('|')}
+		state = " "
+		@n.order_of_magnitude(10).times{state << " "}
+		state << (1..@n).to_a.join('|') << "\n"
+		state << @board[:status].map.with_index{|row, j| "#{j + 1} ".concat row.join('|')}.join("\n")
 		puts state
+	end
+
+	def make_move
+		move = parse_move(gets.chomp)
+		until valid_move?(move)
+			puts "Please make a valid move. Thank you... Punny human."
+			move = gets.chomp
+		end
+		move
+	end
+
+	def reveal
+
+	end
+
+	def parse_move(line)
+
+	end
+
+	def valid_move?(move)
+
+	end
+end
+
+class Fixnum
+	def order_of_magnitude(base)
+		count = 0
+		count += 1 until self / base ** count == 0
+		count
 	end
 end
 
