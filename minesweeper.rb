@@ -1,3 +1,7 @@
+#!/usr/bin/env ruby
+require 'json'
+require 'yaml'
+
 module MinesweeperGame
 	UNEXPLORED = "*"
 	INTERIOR = "_"
@@ -5,6 +9,7 @@ module MinesweeperGame
 	BOMB = "X"
 	BOMBS_FRACTION = {:easy => 20, :medium => 50, :hard => 75}
 	PARSING_REGEXP = /(\d+|[fr])/i
+	PAUSE = "p"
 	VALID_MOVE_MEMBERS = 3
 	NEIGHBORS = [[0, 1], [0, -1], [1, 0], [-1, 0],
 								[1, 1], [1, -1], [-1, 1], [-1, -1]]
@@ -67,25 +72,32 @@ end
 
 class Board
 	include MinesweeperGame
+	attr_accessor :paused
 	def initialize(n, difficulty)
 		@n = n
 		@difficulty = difficulty
+		@paused = false
 		create_board
 		seed_board
-		draw_board
-		instructions
-	end
-
-	def game_over?
-		any?{|tile| tile.bombed?} || all?{|tile| tile.flagged? || tile.revealed?}
 	end
 
 	def make_move
-		move = parse_move(gets.chomp)
+		@paused = false
+		instructions
+		draw_board
+		input = $stdin.gets.chomp
+		move = parse_move(input)
+
 		until valid_move?(move)
+			if input == PAUSE 
+				@paused = true
+				return
+			end
 			puts "Please make a valid move... Punny human."
-			move = parse_move(gets.chomp)
+			input = $stdin.gets.chomp
+			move = parse_move(input)
 		end
+
 		px, py = move[:coords][0].to_i - 1, move[:coords][1].to_i - 1
 		@board[py][px].reveal(move[:type])
 		draw_board
@@ -99,6 +111,10 @@ class Board
 		end
 	end
 
+	def game_over?
+		any?{|tile| tile.bombed?} || all?{|tile| tile.flagged? || tile.revealed?}
+	end
+
 	protected
 
 	def create_board
@@ -107,7 +123,7 @@ class Board
 		connect_neighbors
 	end
 
-	def seed_board #check if can take map! out
+	def seed_board
 		@board.each{|row| row.each{|tile| tile.set_type}}
 	end
 
@@ -158,8 +174,7 @@ class Board
 		result = true
 		@board.each{|row| row.each{|tile| result &= prc.call(tile)}}
 		result
-	end
-	
+	end	
 end
 
 class Minesweeper
@@ -170,11 +185,22 @@ class Minesweeper
 	end
 
 	def run
-		until @board.game_over?
+		@board.paused = false
+		until @board.game_over? || @board.paused
 			@board.make_move
 		end
-		@board.results
+		if @board.paused
+			save_game
+		else
+			@board.results
+		end
 	end
+
+	def save_game
+		file = "minesweeper_game"
+		File.open(file, 'w').puts self.to_yaml
+	end
+
 end
 
 class Fixnum
@@ -185,5 +211,12 @@ class Fixnum
 	end
 end
 
-game = Minesweeper.new
-game.run
+if $PROGRAM_NAME == __FILE__
+	if ARGV[0]
+		game = YAML::load(File.read(ARGV[0]))
+  	game.run
+  else
+  	game = Minesweeper.new
+		game.run
+  end
+end
