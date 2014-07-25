@@ -12,7 +12,7 @@ end
 
 class Tile
 	include MinesweeperGame
-	attr_writer :neighbors
+	attr_accessor :neighbors
 	attr_reader :neighbor_bomb_count, :state
 
 	def initialize
@@ -39,7 +39,7 @@ class Tile
 	end
 
 	def revealed?
-		@state == @type
+		@state == @type || @state == @neighbor_bomb_count
 	end
 
 	def reveal(type)
@@ -47,8 +47,13 @@ class Tile
 			if type == FLAGGED
 				@state = type
 			else
-				@state = @type
-				@neighbors.select{|tile| tile.revealed?}.each{|tile| tile.reveal(type)}
+				p @neighbor_bomb_count
+				if @neighbor_bomb_count == 0
+					@state = @type
+					@neighbors.reject{|tile| tile.revealed?}.each{|tile| tile.reveal(type)}
+				else
+					@state = @neighbor_bomb_count.to_s
+				end
 			end
 		end
 	end
@@ -66,6 +71,7 @@ class Board
 		@difficulty = difficulty
 		create_board
 		seed_board
+		draw_board
 		instructions
 	end
 
@@ -79,9 +85,13 @@ class Board
 			puts "Please make a valid move... Punny human."
 			move = parse_move(gets.chomp)
 		end
-		px, py = move[:coords][0], move[:coords][1]
+		px, py = move[:coords][0].to_i - 1, move[:coords][1].to_i - 1
 		@board[py][px].reveal(move[:type])
 		draw_board
+	end
+
+	def results
+		puts "You lose... punny human..."
 	end
 
 	protected
@@ -101,11 +111,9 @@ class Board
 	end
 
 	def connect_neighbors
-		count = 0
 		@board.each_with_index do |row, y| 
 			row.each_with_index do |tile, x|
 				NEIGHBORS.each do |dx, dy|
-					p count += 1
 					px = x + dx
 					py = y + dy
 					tile.neighbors << @board[py][px] if in_range?([px, py])
@@ -124,11 +132,11 @@ class Board
 
 	def parse_move(line)
 		move = line.scan(PARSING_REGEXP).flatten
-		{:coords => [move[0] - 1, move[1] - 1], :type => move[2]}
+		{:coords => [move[0], move[1]], :type => move[2]}
 	end
 
 	def valid_move?(move)
-		!(move.length != VALID_MOVE_MEMBERS || (move[0] =~ /^[0-9]$/).nil? || (move[1] =~ /^[0-9]$/).nil? || (move[2] =~ /^[fr]$/i).nil?)
+		!((move[:coords].length != 2 || move[:coords][0] =~ /^[0-9]$/).nil? || (move[:coords][1] =~ /^[0-9]$/).nil? || move[:type].nil?)
 	end
 
 	def in_range?(pos)
@@ -137,13 +145,13 @@ class Board
 
 	def any?(&prc)
 		result = false
-		@board.each{|row| row.each{|tile| p tile.bombed?;result |= prc.call(tile)}}
+		@board.each{|row| row.each{|tile| result |= prc.call(tile)}}
 		result
 	end
 
 	def all?(&prc)
 		result = true
-		@board.each{|row| row.each{|tile| p tile.bombed?; result &= prc.call(tile)}}
+		@board.each{|row| row.each{|tile| result &= prc.call(tile)}}
 		result
 	end
 	
@@ -173,4 +181,4 @@ class Fixnum
 end
 
 game = Minesweeper.new
-# game.run
+game.run
