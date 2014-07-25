@@ -4,6 +4,8 @@ class Minesweeper
 	FLAGGED = "F"
 	BOMB = "X"
 	BOMBS_FRACTION = {:easy => 20, :medium => 50, :hard => 75}
+	PARSING_REGEXP = /(\d+|[fr])/i
+	VALID_MOVE_MEMBERS = 3
 
 	def initialize(n = 9, difficulty = :easy)
 		@n = n
@@ -14,10 +16,11 @@ class Minesweeper
 	end
 
 	def run
-		until game_over
+		until game_over?
 			play = make_move
 			reveal(play)
 		end
+		results
 	end
 
 
@@ -51,25 +54,33 @@ class Minesweeper
 		puts state
 	end
 
+	def game_over?
+		true
+	end
+
 	def make_move
 		move = parse_move(gets.chomp)
 		until valid_move?(move)
-			puts "Please make a valid move. Thank you... Punny human."
-			move = gets.chomp
+			puts "Please make a valid move... Punny human."
+			move = parse_move(gets.chomp)
 		end
-		move
+		move[0..2]
 	end
 
 	def reveal
 
 	end
 
-	def parse_move(line)
+	def results
 
 	end
 
-	def valid_move?(move)
+	def parse_move(line)
+		line.scan(PARSING_REGEXP).flatten
+	end
 
+	def valid_move?(move)
+		!(move.length != VALID_MOVE_MEMBERS || (move[0] =~ /^[0-9]$/).nil? || (move[1] =~ /^[0-9]$/).nil? || (move[2] =~ /^[fr]$/i).nil?)
 	end
 end
 
@@ -83,3 +94,4 @@ end
 
 game = Minesweeper.new
 game.draw_board
+game.make_move
