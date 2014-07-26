@@ -8,7 +8,7 @@ module MinesweeperGame
 	FLAGGED = "f"
 	BOMB = "X"
 	BOMBS_FRACTION = {:easy => 20, :medium => 50, :hard => 75}
-	PARSING_REGEXP = /^[(](\d)?, (\d)?[)] (r|f)?$/i
+	PARSING_REGEXP = /^[(](\d+)?, (\d+)?[)] (r|f)?$/i
 	PAUSE = "p"
 	VALID_MOVE_MEMBERS = 3
 	NEIGHBORS = [[0, 1], [0, -1], [1, 0], [-1, 0],
