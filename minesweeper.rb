@@ -8,7 +8,7 @@ module MinesweeperGame
 	FLAGGED = "f"
 	BOMB = "X"
 	BOMBS_FRACTION = {:easy => 20, :medium => 50, :hard => 75}
-	PARSING_REGEXP = /(\d+|[fr])/i
+	PARSING_REGEXP = /^[(](\d)?, (\d)?[)] (r|f)?$/i
 	PAUSE = "p"
 	VALID_MOVE_MEMBERS = 3
 	NEIGHBORS = [[0, 1], [0, -1], [1, 0], [-1, 0],
@@ -87,7 +87,7 @@ class Board
 		move = parse_move(input)
 
 		until valid_move?(move)
-			if input == PAUSE 
+			if input == PAUSE
 				@paused = true
 				return
 			end
@@ -101,6 +101,7 @@ class Board
 	end
 
 	def results
+    draw_board
 		if any?{|tile| tile.bombed?}
 			puts "You lose, punny human..."
 		else
@@ -138,7 +139,7 @@ class Board
 	end
 
 	def connect_neighbors
-		@board.each_with_index do |row, y| 
+		@board.each_with_index do |row, y|
 			row.each_with_index do |tile, x|
 				NEIGHBORS.each do |dx, dy|
 					px = x + dx
@@ -151,7 +152,6 @@ class Board
 
 	def parse_move(line)
 		move = line.scan(PARSING_REGEXP).flatten
-		p move
 		{:coords => [move[0], move[1]], :type => move[2]}
 	end
 
@@ -173,7 +173,7 @@ class Board
 		result = true
 		@board.each{|row| row.each{|tile| result &= prc.call(tile)}}
 		result
-	end	
+	end
 end
 
 class Minesweeper
