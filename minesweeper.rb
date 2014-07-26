@@ -8,7 +8,7 @@ module MinesweeperGame
 	FLAGGED = "f"
 	BOMB = "X"
 	BOMBS_FRACTION = {:easy => 20, :medium => 50, :hard => 75}
-	PARSING_REGEXP = /^[(](\d+)?, (\d+)?[)] (r|f)?$/i
+	PARSING_REGEXP = /^[(](\d+)?,(\d+)?[)] (r|f)?$/i
 	PAUSE = "p"
 	VALID_MOVE_MEMBERS = 3
 	NEIGHBORS = [[0, 1], [0, -1], [1, 0], [-1, 0],
@@ -48,14 +48,14 @@ class Tile
 	end
 
 	def reveal(type)
-		if @state == UNEXPLORED
+		if not revealed?
 			if type == FLAGGED
-				@state = type
-			else
+				toggle_flag
+			elsif not flagged?
 				@state = @type
 				unless @type == BOMB
 					if @neighbor_bomb_count == 0
-						@neighbors.reject{|tile| tile.revealed?}.each{|tile| tile.reveal(type)}
+						@neighbors.reject{|tile| tile.revealed? || tile.flagged?}.each{|tile| tile.reveal(type)}
 					else
 						@state = @neighbor_bomb_count.to_s
 					end
@@ -67,6 +67,14 @@ class Tile
 	protected
 	def _neighbor_bomb_count=(new_count)
 		@neighbor_bomb_count = new_count
+	end
+
+	def toggle_flag
+		if flagged?
+			@state = UNEXPLORED
+		else
+			@state = FLAGGED
+		end
 	end
 end
 
