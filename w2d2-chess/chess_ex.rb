@@ -43,6 +43,11 @@ class Piece
     MOVING_DIR[class_name]
   end
 
+  def dup(board = nil)
+    board = @board.dup if board.nil? #Write with |
+    self.class.new(@color, board, @pos)
+  end
+
   def move_into_check?(pos)
     # Duplicate the board and perform the move.
     # Look to see if the player is in check after the move.
@@ -169,6 +174,14 @@ class Board
     # No pieces have valid moves.
   end
 
+  def dup
+    duplicate_board = Board.new(false)
+    @grid.each{|row| row.each{ |piece| piece.dup(duplicate_board) unless piece.nil? } }
+    #When dupping the pieces, they get assigned to the duplicate board
+    duplicate_board.place(Rook.new(:black, duplicate_board, [5, 5]), [5, 5])
+    duplicate_board
+  end
+
   def draw
     system("clear")
     state = ""
@@ -203,13 +216,13 @@ class Board
     end
   end
 
-  def get_piece_instance(piece_class, position)
+  def get_piece_instance(piece_class, pos)
     if pos[0] < N / 2
       color = :black
     else
       color = :white
     end
-    Kernel.const_get(piece.to_s.capitalize).new(color, self, pos)
+    Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
   end
 
   def place(piece, pos)
@@ -218,8 +231,10 @@ class Board
 
 end
 
-# board = Board.new(false)
-# # board.draw
+board = Board.new(true)
+board.draw
+board.dup
+# board.draw
 # # # board[[9, 8]]
 # board[[0,0]] = Rook.new(:black, board, [0, 0])
 # p board[[0,0]].class
