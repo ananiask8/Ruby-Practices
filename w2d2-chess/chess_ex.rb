@@ -30,7 +30,7 @@ class Piece
   MOVING_DIR = {:rook => [[0, 1], [1, 0], [0, -1], [-1, 0]],
                 :bishop => [[1, 1], [1, -1], [-1, 1], [-1, -1]],
                 :queen => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
-                :pawn => [[1, 0], [-1, 1], [1, 1]],
+                :pawn => {:white => [[-1, 0], [-1, -1], [-1, 1]], :black => [[1, 0], [1, -1], [1, 1]]},
                 :king => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
                 :knight => [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
                 }
@@ -109,15 +109,40 @@ class SteppingPiece < Piece
 
   def constraint_met?(pos)
     class_name = self.class.to_s.downcase.to_sym
+    #This new position is farther from what I can get with one move?
+    #If so, then the constraint is met
     @board.out_of_bounds?(pos) || !MOVING_DIR[class_name].any?{|step| @pos.zip(step).map{|a| a.inject(:+)} == pos}
   end
 
 end
 
-class Pawn < SteppingPiece
+class Pawn < Piece
 
   def representation
     "P"
+  end
+
+  def move_diffs
+    MOVING_DIR[:pawn][@color]
+  end
+
+  def moves
+    free_moves = []
+    moves_to_kill = []
+    pre_processing = super
+
+    free_moves << @pos.zip(MOVING_DIR[:pawn][@color][0]).map{|dif| dif.inject(:+)}
+    moves_to_kill << @pos.zip(MOVING_DIR[:pawn][@color][1]).map{|dif| dif.inject(:+)}
+    moves_to_kill << @pos.zip(MOVING_DIR[:pawn][@color][2]).map{|dif| dif.inject(:+)}
+
+    results = pre_processing.select{|pos| moves_to_kill.include?(pos) && !@board.empty?(pos)}
+    results += pre_processing.select{|pos| free_moves.include?(pos) && @board.empty?(pos)}
+  end
+
+  def constraint_met?(pos)
+    #This new position is farther from what I can get with one move?
+    #If so, then the constraint is met
+    @board.out_of_bounds?(pos) || !MOVING_DIR[:pawn][@color].any?{|step| @pos.zip(step).map{|a| a.inject(:+)} == pos}
   end
 
 end
@@ -345,8 +370,7 @@ class Game
   end
 
   def prompt_move(player)
-    p move = player.play_turn.scan(PARSING_REGEXP).flatten
-    p move.length
+    move = player.play_turn.scan(PARSING_REGEXP).flatten
     raise "Invalid sintax" if move.length != 4 || !move.all?{|element| @@codes[element]}
     [[@@codes[move[1]], @@codes[move[0]]], [@@codes[move[3]], @@codes[move[2]]]]
   end
