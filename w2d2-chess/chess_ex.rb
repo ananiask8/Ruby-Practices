@@ -1,8 +1,11 @@
 class Piece
   # Track position
   # Hold a reference to board
-  def initialize
-
+  attr_reader :color
+  def initialize(color, board, pos)
+    @color = color
+    @board = board
+    @pos = pos
   end
 
   def moves
@@ -24,8 +27,6 @@ end
 class SlidingPiece < Piece
   # Needs reference to board to know when its blocked by another.
   # Dont allow to move to square occupied by piece of same color.
-  def initialize
-  end
 
   def moves(directions)
 
@@ -34,6 +35,7 @@ class SlidingPiece < Piece
 end
 
 class SteppingPiece < Piece
+
 end
 
 class Pawn < Piece
@@ -44,9 +46,6 @@ class Pawn < Piece
 end
 
 class Bishop < SlidingPiece
-
-  def initialize
-  end
 
   def move_dirs
     moves([:diagonal])
@@ -77,13 +76,42 @@ class Queen < SlidingPiece
   end
 end
 
+class King < SteppingPiece
+  def representation
+    "K"
+  end
+end
+
+class Knight < SteppingPiece
+  def representation
+    "H"
+  end
+end
 
 class Board
   LETTERS = ('a'..'z').to_a
-  def initialize(n = 8)
-    @n = n
-    @grid = Array.new(n){Array.new(n)}
-    # Create setup with all pieces in initial positions
+  N = 8
+  STARTING_POS = {:pawn => (0...N).map{|col| [1, col]}.concat((0...N).map{|col| [N - 2, col]}),
+                  :knight => [[0, 1], [0, N - 2], [N - 1, 1], [N - 1, N - 2]],
+                  :bishop => [[0, 2], [0, N - 3], [N - 1, 2], [N - 1, N - 3]],
+                  :rook => [[0, 0], [0, N - 1], [N - 1, 0], [N - 1, N - 1]],
+                  :queen => [[0, 3], [N - 1, 3]],
+                  :king => [[0, 4], [N - 1, 4]] }
+
+  def initialize(auto_setup = true)
+    @grid = Array.new(N){Array.new(N)}
+    setup if auto_setup
+  end
+
+  def [](pos)
+    p pos
+    raise "Invalid position" if out_of_bounds?(pos)
+    @grid[pos[0]][pos[1]]
+  end
+
+  def []=(pos, value)
+    raise "Invalid position" if out_of_bounds?(pos)
+    @grid[pos[0]][pos[1]] = value
   end
 
   def in_check?(color)
@@ -96,6 +124,10 @@ class Board
     # Update piece's position
     # Raise exception if there is no piece at 'start'
     # or the piece cannot move to 'end_pos'
+  end
+
+  def empty?(pos)
+    self[pos].nil?
   end
 
   def move!(start, end_pos)
@@ -119,13 +151,37 @@ class Board
           " "
         end
       end.join('|')
-      "#{j + 1}|".concat rows
+      "#{N - j}|".concat rows
     end.join("|\n")
     state << "|\n" << "  "
-    @n.times{|i| state << "#{LETTERS[i]} "}
+    N.times{|i| state << "#{LETTERS[i]} "}
     puts state
   end
+
+  def out_of_bounds?(pos)
+    pos[0] < 0 || pos[1] < 0 || pos[0] >= N || pos[1] >= N
+  end
+
+  def setup
+    STARTING_POS.each_pair{|piece, positions| place(piece, positions)}
+  end
+
+  def place(piece, positions)
+    positions.each_with_index do |pos|
+      if pos[0] < N / 2
+        color = :black
+      else
+        color = :white
+      end
+      self[pos] = Kernel.const_get(piece.to_s.capitalize).new(color, self, pos)
+    end
+  end
+
 end
 
-board = Board.new
-board.draw
+# board = Board.new
+# board.draw
+# # board[[9, 8]]
+# p board[[5,5]] = Rook.new(:black, board, [5, 5])
+# p board[[5,5]].class
+# p board[[5,5]].color
