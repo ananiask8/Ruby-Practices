@@ -1,16 +1,46 @@
 class Piece
+  MOVING_DIR = {:rook => [[0, 1], [1, 0], [0, -1], [-1, 0]],
+                :bishop => [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+                :queen => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+                :pawn => [[0, 1], [-1, 1], [1, 1]],
+                :king => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+                :knight => [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
+                }
   # Track position
   # Hold a reference to board
-  attr_reader :color
+  attr_reader :color, :pos
   def initialize(color, board, pos)
     @color = color
     @board = board
     @pos = pos
+    @board.place(self, pos) unless @board[pos] == self
   end
 
   def moves
-    # Return array to where pieces can move.
-    # Implement in subclasses.
+    result = []
+    move_diffs.each do |differential|
+      result.concat valid_moves(differential)
+    end
+    result
+  end
+
+  def valid_moves(differential)
+    result = []
+    new_pos = @pos.zip(differential).map{|a| a.inject(:+)}
+    until constraint_met?(new_pos)
+      unless @board.empty?(new_pos)
+        result << new_pos if @board[new_pos].color != @color
+        break
+      end
+      result << new_pos
+      new_pos = new_pos.zip(differential).map{|a| a.inject(:+)}
+    end
+    result
+  end
+
+  def move_diffs
+    class_name = self.class.to_s.downcase.to_sym
+    MOVING_DIR[class_name]
   end
 
   def move_into_check?(pos)
@@ -28,58 +58,59 @@ class SlidingPiece < Piece
   # Needs reference to board to know when its blocked by another.
   # Dont allow to move to square occupied by piece of same color.
 
-  def moves(directions)
-
+  def constraint_met?(pos)
+    @board.out_of_bounds?(pos)
   end
 
 end
 
 class SteppingPiece < Piece
 
+  def constraint_met?(pos)
+    class_name = self.class.to_s.downcase.to_sym
+    @board.out_of_bounds?(pos) || !MOVING_DIR[class_name].any?{|step| @pos.zip(step).map{|a| a.inject(:+)} == pos}
+  end
+
 end
 
-class Pawn < Piece
+class Pawn < SteppingPiece
 
   def representation
     "P"
   end
+
 end
 
 class Bishop < SlidingPiece
 
-  def move_dirs
-    moves([:diagonal])
-  end
-
   def representation
     "B"
   end
+
 end
 
 class Rook < SlidingPiece
-  def move_dirs
-    moves([:straight])
-  end
 
   def representation
     "R"
   end
+
 end
 
 class Queen < SlidingPiece
-  def move_dirs
-    moves([:straight, :diagonal])
-  end
 
   def representation
     "Q"
   end
+
 end
 
 class King < SteppingPiece
+
   def representation
     "K"
   end
+
 end
 
 class Knight < SteppingPiece
@@ -104,7 +135,6 @@ class Board
   end
 
   def [](pos)
-    p pos
     raise "Invalid position" if out_of_bounds?(pos)
     @grid[pos[0]][pos[1]]
   end
@@ -131,7 +161,7 @@ class Board
   end
 
   def move!(start, end_pos)
-    # To use with Piece#valid_moves
+    # To use with Piece#valid_moves (checkmate and such)
   end
 
   def checkmate?(color)
@@ -163,25 +193,36 @@ class Board
   end
 
   def setup
-    STARTING_POS.each_pair{|piece, positions| place(piece, positions)}
+    STARTING_POS.each_pair{|piece_class, positions| place_all(piece_class, positions)}
   end
 
-  def place(piece, positions)
+  def place_all(piece_class, positions)
     positions.each_with_index do |pos|
-      if pos[0] < N / 2
-        color = :black
-      else
-        color = :white
-      end
-      self[pos] = Kernel.const_get(piece.to_s.capitalize).new(color, self, pos)
+      piece = get_piece_instance(piece_class, pos)
+      place(piece, pos)
     end
+  end
+
+  def get_piece_instance(piece_class, position)
+    if pos[0] < N / 2
+      color = :black
+    else
+      color = :white
+    end
+    Kernel.const_get(piece.to_s.capitalize).new(color, self, pos)
+  end
+
+  def place(piece, pos)
+    self[pos] = piece if self.empty?(pos)
   end
 
 end
 
-# board = Board.new
+# board = Board.new(false)
+# # board.draw
+# # # board[[9, 8]]
+# board[[0,0]] = Rook.new(:black, board, [0, 0])
+# p board[[0,0]].class
+# p board[[0,0]].color
 # board.draw
-# # board[[9, 8]]
-# p board[[5,5]] = Rook.new(:black, board, [5, 5])
-# p board[[5,5]].class
-# p board[[5,5]].color
+# p board[[0,0]].moves
