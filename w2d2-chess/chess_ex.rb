@@ -1,3 +1,5 @@
+require 'colorize'
+
 class NilClass
   def color
     nil
@@ -28,10 +30,11 @@ class Piece
   MOVING_DIR = {:rook => [[0, 1], [1, 0], [0, -1], [-1, 0]],
                 :bishop => [[1, 1], [1, -1], [-1, 1], [-1, -1]],
                 :queen => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
-                :pawn => [[0, 1], [-1, 1], [1, 1]],
+                :pawn => [[1, 0], [-1, 1], [1, 1]],
                 :king => [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
                 :knight => [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]]
                 }
+  PIECE_SYMBOL_COLOR = {:white => :white, :black => :red}
   # Track position
   # Hold a reference to board
   attr_accessor :pos
@@ -66,7 +69,7 @@ class Piece
   end
 
   def valid_moves
-    moves.reject{|pos| move_into_check?(pos) }
+    moves.reject{|pos| move_into_check?(pos)}
   end
 
   def move_diffs
@@ -89,7 +92,8 @@ class Piece
     duplicate_board.in_check?(@color)
   end
 
-  def representation
+  def color_symbol
+    representation.colorize(PIECE_SYMBOL_COLOR[@color])
   end
 end
 
@@ -168,7 +172,10 @@ class Board
 
   def initialize(auto_setup = true)
     @grid = Array.new(N){Array.new(N)}
-    setup if auto_setup
+    if auto_setup
+      setup
+      draw
+    end
   end
 
   def [](pos)
@@ -205,7 +212,7 @@ class Board
     # Update piece's position
     # Raise exception if there is no piece at 'start'
     # or the piece cannot move to 'end_pos'
-    raise "There's no piece at start" if empty?(start) || self[start].moves.none?{|move| move == end_pos}
+    raise "Invalid move" if empty?(start) || self[start].moves.none?{|move| move == end_pos}
     move!(start, end_pos)
   end
 
@@ -219,6 +226,7 @@ class Board
     self[end_pos] = piece
     self[start] = nil
     piece.pos = end_pos
+    draw
   end
 
   def checkmate?(color)
@@ -242,7 +250,7 @@ class Board
     state << @grid.map.with_index do |row, j|
       rows = row.map do |piece|
         unless piece.nil?
-          piece.representation
+          piece.color_symbol
         else
           " "
         end
@@ -277,9 +285,80 @@ class Board
     end
     Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
   end
+end
+
+class Player
 
 end
 
+class HumanPlayer < Player
+
+  def play_turn
+    gets.chomp
+  end
+
+end
+
+class Game
+  N = 8
+  PARSING_REGEXP = /^([a-f])(\d)->([a-f])(\d)$/i
+  SAVE = "s"
+
+  class << self
+    def setup
+      @@codes = self.horizontal_keys.merge self.vertical_keys
+    end
+
+    def horizontal_keys
+      map_each_to_index(("a".."h"))
+    end
+
+    def vertical_keys
+      map_each_to_index(("1".."#{N}").to_a.reverse)
+    end
+
+    def map_each_to_index(array)
+      hash = {}
+      array.each_with_index{|key, value| hash[key] = value}
+      hash
+    end
+  end
+
+  def initialize
+    @board = Board.new(true)
+    @players = [HumanPlayer.new, HumanPlayer.new]
+  end
+
+  def play
+
+    until game_over?
+      @players.each do |player|
+        begin
+          move = prompt_move(player)
+          @board.move(move[0], move[1])
+        rescue
+          puts "Please make a valid move"
+          retry
+        end
+      end
+    end
+  end
+
+  def prompt_move(player)
+    p move = player.play_turn.scan(PARSING_REGEXP).flatten
+    p move.length
+    raise "Invalid sintax" if move.length != 4 || !move.all?{|element| @@codes[element]}
+    [[@@codes[move[1]], @@codes[move[0]]], [@@codes[move[3]], @@codes[move[2]]]]
+  end
+
+  def game_over?
+    @board.checkmate?(:white) || @board.checkmate?(:black) #|| @board.draw?
+  end
+end
+
+Game.setup
+game = Game.new
+game.play
 # board = Board.new(true)
 # board.draw
 # # board.in_check?(:white)
