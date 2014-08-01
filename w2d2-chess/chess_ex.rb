@@ -1,5 +1,3 @@
-#Make nil respond to all pieces methods by returning nil
-#Make board respond to |=
 class NilClass
   def color
     nil
@@ -77,7 +75,7 @@ class Piece
   end
 
   def dup(board = nil)
-    board = @board.dup if board.nil? #Write with |
+    board ||= @board.dup
     self.class.new(@color, board, @pos)
   end
 
@@ -96,8 +94,6 @@ class Piece
 end
 
 class SlidingPiece < Piece
-  # Needs reference to board to know when its blocked by another.
-  # Dont allow to move to square occupied by piece of same color.
 
   def constraint_met?(pos)
     @board.out_of_bounds?(pos)
@@ -187,7 +183,6 @@ class Board
 
   def in_check?(color)
     # Find king
-    # self.draw
     king_row = @grid.find do |row|
       row.any?{|piece| piece.is_a?(King, color)}
     end
@@ -210,6 +205,8 @@ class Board
     # Update piece's position
     # Raise exception if there is no piece at 'start'
     # or the piece cannot move to 'end_pos'
+    raise "There's no piece at start" if empty?(start) || self[start].moves.none?{|move| move == end_pos}
+    move!(start, end_pos)
   end
 
   def empty?(pos)
@@ -285,9 +282,12 @@ end
 
 # board = Board.new(true)
 # board.draw
-# board.in_check?(:white)
-# board.dup
+# # board.in_check?(:white)
+# d = board.dup
+# d[[5, 5]] = Rook.new(:black, d, [5, 5])
+# board[[3, 3]] = Rook.new(:black, board, [3, 3])
 # board.draw
+# d.draw
 # # # board[[9, 8]]
 # board[[0,0]] = Rook.new(:black, board, [0, 0])
 # p board[[0,0]].class
