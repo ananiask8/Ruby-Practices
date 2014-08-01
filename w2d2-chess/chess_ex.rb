@@ -1,3 +1,30 @@
+#Make nil respond to all pieces methods by returning nil
+class NilClass
+  def color
+    nil
+  end
+
+  def pos
+    nil
+  end
+
+  def board
+    nil
+  end
+
+  def is_a?(*args)
+    nil
+  end
+
+  def moves
+    nil
+  end
+
+  def dup(*args)
+    nil
+  end
+end
+
 class Piece
   MOVING_DIR = {:rook => [[0, 1], [1, 0], [0, -1], [-1, 0]],
                 :bishop => [[1, 1], [1, -1], [-1, 1], [-1, -1]],
@@ -19,7 +46,7 @@ class Piece
   def moves
     result = []
     move_diffs.each do |differential|
-      result.concat valid_moves(differential)
+      result += valid_moves(differential)
     end
     result
   end
@@ -156,10 +183,15 @@ class Board
   def in_check?(color)
     # Find king
     king_row = @grid.find do |row|
-      row.any?{|piece| piece.is_a?(King, color) unless piece.nil?}
+      row.any?{|piece| piece.is_a?(King, color)}
     end
-    king = king_row.find{|piece| piece.is_a?(King, color) unless piece.nil?}
+    king = king_row.find{|piece| piece.is_a?(King, color)}
     # See if any oposing piece can move there
+    enemy_pieces = []
+    @grid.map do |row|
+      enemy_pieces += row.select{|piece| piece.color != color && !piece.nil?}
+    end
+    enemy_pieces.map(&:moves).inject(:+).any?{|pos| pos == king.pos}
   end
 
   def move(start, end_pos)
@@ -184,7 +216,7 @@ class Board
 
   def dup
     duplicate_board = Board.new(false)
-    @grid.each{|row| row.each{ |piece| piece.dup(duplicate_board) unless piece.nil? } }
+    @grid.each{|row| row.each{ |piece| piece.dup(duplicate_board)} }
     #When dupping the pieces, they get assigned to the duplicate board
     duplicate_board.place(Rook.new(:black, duplicate_board, [5, 5]), [5, 5])
     duplicate_board
