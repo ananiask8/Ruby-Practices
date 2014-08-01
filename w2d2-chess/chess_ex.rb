@@ -48,6 +48,10 @@ class Piece
     self.class.new(@color, board, @pos)
   end
 
+  def is_a?(piece_class, color)
+    self.class == piece_class && @color == color
+  end
+
   def move_into_check?(pos)
     # Duplicate the board and perform the move.
     # Look to see if the player is in check after the move.
@@ -151,6 +155,10 @@ class Board
 
   def in_check?(color)
     # Find king
+    king_row = @grid.find do |row|
+      row.any?{|piece| piece.is_a?(King, color) unless piece.nil?}
+    end
+    king = king_row.find{|piece| piece.is_a?(King, color) unless piece.nil?}
     # See if any oposing piece can move there
   end
 
@@ -233,7 +241,8 @@ end
 
 board = Board.new(true)
 board.draw
-board.dup
+board.in_check?(:white)
+# board.dup
 # board.draw
 # # # board[[9, 8]]
 # board[[0,0]] = Rook.new(:black, board, [0, 0])
