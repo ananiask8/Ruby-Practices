@@ -1,4 +1,5 @@
 #Make nil respond to all pieces methods by returning nil
+#Make board respond to |=
 class NilClass
   def color
     nil
@@ -35,23 +36,24 @@ class Piece
                 }
   # Track position
   # Hold a reference to board
-  attr_reader :color, :pos
+  attr_accessor :pos
+  attr_reader :color
   def initialize(color, board, pos)
     @color = color
     @board = board
     @pos = pos
-    @board.place(self, pos) unless @board[pos] == self
+    @board[pos] = self unless @board[pos] == self
   end
 
   def moves
     result = []
     move_diffs.each do |differential|
-      result += valid_moves(differential)
+      result += possible_moves(differential)
     end
     result
   end
 
-  def valid_moves(differential)
+  def possible_moves(differential)
     result = []
     new_pos = @pos.zip(differential).map{|a| a.inject(:+)}
     until constraint_met?(new_pos)
@@ -63,6 +65,10 @@ class Piece
       new_pos = new_pos.zip(differential).map{|a| a.inject(:+)}
     end
     result
+  end
+
+  def valid_moves
+    moves.reject{|pos| move_into_check?(pos) }
   end
 
   def move_diffs
@@ -80,10 +86,9 @@ class Piece
   end
 
   def move_into_check?(pos)
-    # Duplicate the board and perform the move.
-    # Look to see if the player is in check after the move.
-    # Board#in_check?
-    # Need Board#dup for this. Remember to write it for all classes involved.
+    duplicate_board = @board.dup
+    duplicate_board.move!(@pos.dup, pos)
+    duplicate_board.in_check?(@color)
   end
 
   def representation
@@ -175,23 +180,29 @@ class Board
     @grid[pos[0]][pos[1]]
   end
 
-  def []=(pos, value)
+  def []=(pos, piece)
     raise "Invalid position" if out_of_bounds?(pos)
-    @grid[pos[0]][pos[1]] = value
+    @grid[pos[0]][pos[1]] = piece
   end
 
   def in_check?(color)
     # Find king
+    # self.draw
     king_row = @grid.find do |row|
       row.any?{|piece| piece.is_a?(King, color)}
     end
     king = king_row.find{|piece| piece.is_a?(King, color)}
     # See if any oposing piece can move there
-    enemy_pieces = []
+    enemy_color = color == :white ? :black : :white
+    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.pos}
+  end
+
+  def all_pieces(color)
+    pieces = []
     @grid.map do |row|
-      enemy_pieces += row.select{|piece| piece.color != color && !piece.nil?}
+      pieces += row.select{|piece| piece.color == color && !piece.nil?}
     end
-    enemy_pieces.map(&:moves).inject(:+).any?{|pos| pos == king.pos}
+    pieces
   end
 
   def move(start, end_pos)
@@ -207,18 +218,23 @@ class Board
 
   def move!(start, end_pos)
     # To use with Piece#valid_moves (checkmate and such)
+    piece = self[start]
+    self[end_pos] = piece
+    self[start] = nil
+    piece.pos = end_pos
   end
 
   def checkmate?(color)
     # If player in check.
+    # AND
     # No pieces have valid moves.
+    in_check?(color) && all_pieces(color).all?{|piece| piece.valid_moves == []}
   end
 
   def dup
     duplicate_board = Board.new(false)
     @grid.each{|row| row.each{ |piece| piece.dup(duplicate_board)} }
     #When dupping the pieces, they get assigned to the duplicate board
-    duplicate_board.place(Rook.new(:black, duplicate_board, [5, 5]), [5, 5])
     duplicate_board
   end
 
@@ -252,7 +268,7 @@ class Board
   def place_all(piece_class, positions)
     positions.each_with_index do |pos|
       piece = get_piece_instance(piece_class, pos)
-      place(piece, pos)
+      self[pos] = piece
     end
   end
 
@@ -265,15 +281,11 @@ class Board
     Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
   end
 
-  def place(piece, pos)
-    self[pos] = piece if self.empty?(pos)
-  end
-
 end
 
-board = Board.new(true)
-board.draw
-board.in_check?(:white)
+# board = Board.new(true)
+# board.draw
+# board.in_check?(:white)
 # board.dup
 # board.draw
 # # # board[[9, 8]]
