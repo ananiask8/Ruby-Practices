@@ -199,7 +199,7 @@ class Board
     @grid = Array.new(N){Array.new(N)}
     if auto_setup
       setup
-      draw
+      # draw
     end
   end
 
@@ -391,9 +391,11 @@ class Game
 
   def play
 
-    until game_over?
+    loop do
       @players.each do |player|
+        break if game_over?
         begin
+          @board.draw
           move = prompt_move(player)
           @board.move(move[0], move[1])
         rescue
@@ -401,9 +403,10 @@ class Game
           puts "Please make a valid move"
           retry
         end
-        @board.draw
       end
+      break if game_over?
     end
+    results
   end
 
   def prompt_move(player)
@@ -425,7 +428,20 @@ class Game
   end
 
   def game_over?
-    @board.checkmate?(:white) || @board.checkmate?(:black) #|| @board.draw?
+    winner? #|| @board.draw?
+  end
+
+  def winner?
+    @board.checkmate?(:white) || @board.checkmate?(:black)
+  end
+
+  def results
+    @board.draw
+    return puts "Its a draw..." unless winner?
+    if @board.checkmate?(:white)
+      winner = @players[0].color == :white ? @players[0] : @players[1]
+    end
+    puts "The winner is #{winner.name}"
   end
 end
 
