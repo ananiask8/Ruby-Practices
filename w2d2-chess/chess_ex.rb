@@ -273,9 +273,9 @@ class Board
       rows = row.map.with_index do |piece, i|
         to_print = ""
         unless piece.nil?
-          to_print = piece.color_symbol
+          to_print = piece.color_symbol.concat " "
         else
-          to_print = " "
+          to_print = "  "
         end
         mark_color = prc.call([j, i]) unless prc.nil?
         to_print.colorize(background: mark_color)
@@ -286,7 +286,7 @@ class Board
     end.join("|\n")
 
     state << "|\n" << "  "
-    N.times{|i| state << "#{LETTERS[i]} "}
+    N.times{|i| state << " #{LETTERS[i]} "}
     puts state
   end
 
