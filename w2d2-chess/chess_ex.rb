@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'colorize'
 
 class NilClass
@@ -119,7 +120,7 @@ end
 class Pawn < Piece
 
   def representation
-    "P"
+    "♟"
   end
 
   def move_diffs
@@ -150,7 +151,7 @@ end
 class Bishop < SlidingPiece
 
   def representation
-    "B"
+    "♝"
   end
 
 end
@@ -158,7 +159,7 @@ end
 class Rook < SlidingPiece
 
   def representation
-    "R"
+    "♜"
   end
 
 end
@@ -166,7 +167,7 @@ end
 class Queen < SlidingPiece
 
   def representation
-    "Q"
+    "♕"
   end
 
 end
@@ -174,14 +175,14 @@ end
 class King < SteppingPiece
 
   def representation
-    "K"
+    "♔"
   end
 
 end
 
 class Knight < SteppingPiece
   def representation
-    "H"
+    "♞"
   end
 end
 
@@ -230,10 +231,6 @@ class Board
   end
 
   def move(start, end_pos)
-    # Update grid
-    # Update piece's position
-    # Raise exception if there is no piece at 'start'
-    # or the piece cannot move to 'end_pos'
     piece = self[start]
     raise "Invalid move" if empty?(start) || self[start].moves.none?{|move| move == end_pos} || piece.move_into_check?(end_pos)
     move!(start, end_pos)
