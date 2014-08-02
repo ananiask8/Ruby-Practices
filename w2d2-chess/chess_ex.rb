@@ -435,7 +435,7 @@ class Game
     @board.draw
     return puts "Its a draw..." unless winner?
     if @board.checkmate?(:white)
-      winner = @players[0].color == :white ? @players[0] : @players[1]
+      winner = @players[0].color == :black ? @players[0] : @players[1]
     end
     puts "The winner is #{winner.name}"
   end
