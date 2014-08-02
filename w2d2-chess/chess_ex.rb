@@ -237,7 +237,8 @@ class Board
     # Update piece's position
     # Raise exception if there is no piece at 'start'
     # or the piece cannot move to 'end_pos'
-    raise "Invalid move" if empty?(start) || self[start].moves.none?{|move| move == end_pos}
+    piece = self[start]
+    raise "Invalid move" if empty?(start) || self[start].moves.none?{|move| move == end_pos} || piece.move_into_check?(end_pos)
     move!(start, end_pos)
   end
 
@@ -327,12 +328,28 @@ end
 
 class Player
 
+  @@count_players = 0
+  CODE_COLOR = {:white => :white, :black => :red}
+  attr_reader :name
+
+  def initialize(name = nil)
+    @name = name || "#{self.class} ##{@@count_players + 1}"
+    @@count_players += 1
+  end
+
 end
 
 class HumanPlayer < Player
 
+  attr_reader :color
+
   def play_turn
     gets.chomp
+  end
+
+  def color=(color)
+    @color ||= color
+    @name = @name.colorize(CODE_COLOR[color])
   end
 
 end
@@ -362,9 +379,14 @@ class Game
     end
   end
 
-  def initialize
+  def initialize(player1, player2)
     @board = Board.new(true)
-    @players = [HumanPlayer.new, HumanPlayer.new]
+    if player1.class != HumanPlayer
+      player1, player2 = player2, player1
+    end
+    player1.color = :white
+    player2.color = :black
+    @players = [player1, player2]
   end
 
   def play
@@ -385,13 +407,15 @@ class Game
   end
 
   def prompt_move(player)
-    puts "Make a move:"
+    puts "Select a piece to move #{player.name}:"
     start_code = player.play_turn.scan(COMMAND_REGEXP).flatten
     raise "Invalid sintax" if start_code.length != 2 || !start_code.all?{|element| @@codes[element]}
     start = [@@codes[start_code[1]], @@codes[start_code[0]]]
+    raise "Select your pieces only" if @board[start].color != player.color
 
     @board.light_possible_moves(start)
 
+    puts "Select destination:"
     print "-> "
     end_pos_code = player.play_turn.scan(COMMAND_REGEXP).flatten
     raise "Invalid sintax" if end_pos_code.length != 2 || !end_pos_code.all?{|element| @@codes[element]}
@@ -406,19 +430,5 @@ class Game
 end
 
 Game.setup
-game = Game.new
+game = Game.new(HumanPlayer.new, HumanPlayer.new)
 game.play
-# board = Board.new(true)
-# board.draw
-# # board.in_check?(:white)
-# d = board.dup
-# d[[5, 5]] = Rook.new(:black, d, [5, 5])
-# board[[3, 3]] = Rook.new(:black, board, [3, 3])
-# board.draw
-# d.draw
-# # # board[[9, 8]]
-# board[[0,0]] = Rook.new(:black, board, [0, 0])
-# p board[[0,0]].class
-# p board[[0,0]].color
-# board.draw
-# p board[[0,0]].moves
