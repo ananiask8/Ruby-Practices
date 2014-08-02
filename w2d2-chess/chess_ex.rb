@@ -251,7 +251,7 @@ class Board
     self[end_pos] = piece
     self[start] = nil
     piece.pos = end_pos
-    draw
+    # draw
   end
 
   def checkmate?(color)
@@ -268,20 +268,26 @@ class Board
     duplicate_board
   end
 
-  def draw
+  def draw(&prc)
     system("clear")
     state = ""
     rows = ""
     state << @grid.map.with_index do |row, j|
-      rows = row.map do |piece|
+      rows = row.map.with_index do |piece, i|
+        to_print = ""
         unless piece.nil?
-          piece.color_symbol
+          to_print = piece.color_symbol
         else
-          " "
+          to_print = " "
         end
+        mark_color = prc.call([j, i]) unless prc.nil?
+        to_print.colorize(background: mark_color)
+
       end.join('|')
       "#{N - j}|".concat rows
+
     end.join("|\n")
+
     state << "|\n" << "  "
     N.times{|i| state << "#{LETTERS[i]} "}
     puts state
@@ -310,6 +316,13 @@ class Board
     end
     Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
   end
+
+  def light_possible_moves(start)
+    potential_moves = self[start].moves
+    draw do |pos|
+      potential_moves.any?{|mov| mov == pos} ? :yellow : nil
+    end
+  end
 end
 
 class Player
@@ -326,7 +339,7 @@ end
 
 class Game
   N = 8
-  PARSING_REGEXP = /^([a-f])(\d)->([a-f])(\d)$/i
+  COMMAND_REGEXP = /^([a-h])(\d)$/i
   SAVE = "s"
 
   class << self
@@ -362,17 +375,29 @@ class Game
           move = prompt_move(player)
           @board.move(move[0], move[1])
         rescue
+          @board.draw
           puts "Please make a valid move"
           retry
         end
+        @board.draw
       end
     end
   end
 
   def prompt_move(player)
-    move = player.play_turn.scan(PARSING_REGEXP).flatten
-    raise "Invalid sintax" if move.length != 4 || !move.all?{|element| @@codes[element]}
-    [[@@codes[move[1]], @@codes[move[0]]], [@@codes[move[3]], @@codes[move[2]]]]
+    puts "Make a move:"
+    start_code = player.play_turn.scan(COMMAND_REGEXP).flatten
+    raise "Invalid sintax" if start_code.length != 2 || !start_code.all?{|element| @@codes[element]}
+    start = [@@codes[start_code[1]], @@codes[start_code[0]]]
+
+    @board.light_possible_moves(start)
+
+    print "-> "
+    end_pos_code = player.play_turn.scan(COMMAND_REGEXP).flatten
+    raise "Invalid sintax" if end_pos_code.length != 2 || !end_pos_code.all?{|element| @@codes[element]}
+    end_pos = [@@codes[end_pos_code[1]], @@codes[end_pos_code[0]]]
+
+    [start, end_pos]
   end
 
   def game_over?
