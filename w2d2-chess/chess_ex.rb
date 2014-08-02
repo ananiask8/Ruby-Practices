@@ -197,10 +197,7 @@ class Board
 
   def initialize(auto_setup = true)
     @grid = Array.new(N){Array.new(N)}
-    if auto_setup
-      setup
-      # draw
-    end
+    setup if auto_setup
   end
 
   def [](pos)
@@ -247,12 +244,10 @@ class Board
   end
 
   def move!(start, end_pos)
-    # To use with Piece#valid_moves (checkmate and such)
     piece = self[start]
     self[end_pos] = piece
     self[start] = nil
     piece.pos = end_pos
-    # draw
   end
 
   def checkmate?(color)
@@ -260,6 +255,10 @@ class Board
     # AND
     # No pieces have valid moves.
     in_check?(color) && all_pieces(color).all?{|piece| piece.valid_moves == []}
+  end
+
+  def draw?
+    all_pieces(:white).length == 1 || all_pieces(:black).length == 1
   end
 
   def dup
@@ -428,7 +427,7 @@ class Game
   end
 
   def game_over?
-    winner? #|| @board.draw?
+    winner? || @board.draw?
   end
 
   def winner?
