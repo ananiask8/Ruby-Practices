@@ -146,7 +146,7 @@ class Pawn < Piece
 
     results = pre_processing.select{|pos| moves_to_kill.include?(pos) && !@board.empty?(pos)}
     results += pre_processing.select{|pos| free_moves.include?(pos) && @board.empty?(pos)}
-    p results << free_moves[0].zip(MOVING_DIR[@color][0]).map{|dif| dif.inject(:+)} if @pos == @initial_position
+    results << free_moves[0].zip(MOVING_DIR[@color][0]).map{|dif| dif.inject(:+)} if @pos == @initial_position
   end
 
   def constraint_met?(pos)
@@ -275,7 +275,7 @@ class Board
   end
 
   def draw(&prc)
-    # system("clear")
+    system("clear")
     state = ""
     rows = ""
     state << @grid.map.with_index do |row, j|
