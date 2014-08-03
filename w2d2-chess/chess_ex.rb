@@ -145,8 +145,9 @@ class Pawn < Piece
     moves_to_kill << @pos.zip(MOVING_DIR[@color][2]).map{|dif| dif.inject(:+)}
 
     results = pre_processing.select{|pos| moves_to_kill.include?(pos) && !@board.empty?(pos)}
-    results += pre_processing.select{|pos| free_moves.include?(pos) && @board.empty?(pos)}
     results << free_moves[0].zip(MOVING_DIR[@color][0]).map{|dif| dif.inject(:+)} if @pos == @initial_position
+    results += pre_processing.select{|pos| free_moves.include?(pos) && @board.empty?(pos)}
+
   end
 
   def constraint_met?(pos)
