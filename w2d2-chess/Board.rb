@@ -1,3 +1,4 @@
+require 'active_support/all'
 class Board
   LETTERS = ('a'..'z').to_a
   N = 8
@@ -26,18 +27,18 @@ class Board
   def in_check?(color)
     # Find king
     king_row = @grid.find do |row|
-      row.any?{|piece| piece.is_a?(King, color)}
+      row.any?{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
     end
-    king = king_row.find{|piece| piece.is_a?(King, color)}
+    king = king_row.find{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
     # See if any oposing piece can move there
     enemy_color = color == :white ? :black : :white
-    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.pos}
+    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.try(:pos)}
   end
 
   def all_pieces(color)
     pieces = []
     @grid.map do |row|
-      pieces += row.select{|piece| piece.color == color && !piece.nil?}
+      pieces += row.select{|piece| piece.try(:color) == color}
     end
     pieces
   end
@@ -56,7 +57,7 @@ class Board
     piece = self[start]
     self[end_pos] = piece
     self[start] = nil
-    piece.pos = end_pos
+    piece.pos = end_pos unless piece.nil?
   end
 
   def checkmate?(color)
@@ -72,7 +73,7 @@ class Board
 
   def dup
     duplicate_board = Board.new(false)
-    @grid.each{|row| row.each{ |piece| piece.dup(duplicate_board)} }
+    @grid.each{|row| row.each{ |piece| piece.try(:dup, duplicate_board)} }
     #When dupping the pieces, they get assigned to the duplicate board
     duplicate_board
   end

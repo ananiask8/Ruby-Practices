@@ -1,37 +1,13 @@
 # encoding: utf-8
+# require 'rubygems'
 require 'colorize'
+require 'active_support/all'
 require './Piece.rb'
 require './Pawn.rb'
 require './SliddingPiece.rb'
 require './SteppingPiece.rb'
 require './Player.rb'
 require './Board.rb'
-
-class NilClass
-  def color
-    nil
-  end
-
-  def pos
-    nil
-  end
-
-  def board
-    nil
-  end
-
-  def is_a?(*args)
-    nil
-  end
-
-  def moves
-    nil
-  end
-
-  def dup(*args)
-    nil
-  end
-end
 
 class Game
   N = 8
@@ -119,6 +95,8 @@ class Game
     return puts "Its a draw..." unless winner?
     if @board.checkmate?(:white)
       winner = @players[0].color == :black ? @players[0] : @players[1]
+    else
+      winner = @players[0].color == :white ? @players[0] : @players[1]
     end
     puts "The winner is #{winner.name}"
   end

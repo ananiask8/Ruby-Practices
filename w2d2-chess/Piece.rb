@@ -47,13 +47,9 @@ class Piece
     self.class.new(@color, board, @pos)
   end
 
-  def is_a?(piece_class, color)
-    self.class == piece_class && @color == color
-  end
-
   def move_into_check?(pos)
-    duplicate_board = @board.dup
-    duplicate_board.move!(@pos.dup, pos)
+    duplicate_board = @board.try(:dup)
+    duplicate_board.move!(@pos.try(:dup), pos)
     duplicate_board.in_check?(@color)
   end
 
