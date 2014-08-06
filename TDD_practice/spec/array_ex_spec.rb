@@ -55,7 +55,3 @@ describe Array do
     end
   end
 end
-
-# describe Hanoi do
-
-# end
