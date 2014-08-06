@@ -43,20 +43,18 @@ class Board
   def all_pieces(color)
     pieces = []
     @grid.map do |row|
-      pieces += row.select{|piece| piece.try(:color) == color}
+      pieces += row.compact.select{|piece| piece.color == color}
     end
     pieces
   end
 
   def in_check?(color)
-    # Find king
-    king_row = @grid.find do |row|
-      row.any?{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
-    end
-    king = king_row.find{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
-    # See if any oposing piece can move there
+    king_of_color = Proc.new{|piece| piece.is_a?(King) && piece.color == color}
+
+    king = @grid.find{|row| row.compact.any?(&king_of_color)}.compact.find(&king_of_color)
+
     enemy_color = color == :white ? :black : :white
-    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.try(:pos)}
+    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.pos}
   end
 
   def checkmate?(color)
@@ -104,10 +102,10 @@ class Board
   end
 
   def setup
-    STARTING_POS.each_pair{|piece_class, positions| place_all_of_piece_type(piece_class, positions)}
+    STARTING_POS.each_pair{|piece_class, positions| place_all_pieces_of_type(piece_class, positions)}
   end
 
-  def place_all_of_piece_type(piece_class, positions)
+  def place_all_pieces_of_type(piece_class, positions)
     positions.each_with_index do |pos|
       color = pos[0] < N / 2 ? :black : :white
       self[pos] = Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)

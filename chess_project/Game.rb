@@ -9,10 +9,14 @@ require './SteppingPiece.rb'
 require './Player.rb'
 require './Board.rb'
 
+# Still left to implement: Saving capability, Pawns turning to other pieces as they reach
+# the opposite end of the Board, selecting the pieces with the arrows/mouse (js) and AI.
+# Also add max qty of steps while in check to declare a draw.
+
 class Game
   N = 8
   COMMAND_REGEXP = /^([a-h])(\d)$/i
-  SAVE = "s"
+  # SAVE = "s"
 
   class << self
     def setup
@@ -45,7 +49,6 @@ class Game
   end
 
   def play
-
     loop do
       @players.each do |player|
         break if game_over?
@@ -67,7 +70,7 @@ class Game
   def prompt_move(player)
     puts "Select a piece to move #{player.name}:"
     start_code = player.play_turn.scan(COMMAND_REGEXP).flatten
-    raise "Invalid sintax" if start_code.length != 2 || !start_code.all?{|element| @@codes[element]}
+    raise "Invalid sintax" if invalid_sintax?(start_code)
     start = [@@codes[start_code[1]], @@codes[start_code[0]]]
     raise "Select your pieces only" if @board[start].color != player.color
 
@@ -76,10 +79,14 @@ class Game
     puts "Select destination:"
     print "-> "
     end_pos_code = player.play_turn.scan(COMMAND_REGEXP).flatten
-    raise "Invalid sintax" if end_pos_code.length != 2 || !end_pos_code.all?{|element| @@codes[element]}
+    raise "Invalid sintax" if invalid_sintax?(end_pos_code)
     end_pos = [@@codes[end_pos_code[1]], @@codes[end_pos_code[0]]]
 
     [start, end_pos]
+  end
+
+  def invalid_sintax?(move_code)
+    move_code.length != 2 || !move_code.all?{|element| @@codes[element]}
   end
 
   def game_over?

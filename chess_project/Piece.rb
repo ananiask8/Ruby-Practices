@@ -23,10 +23,12 @@ class Piece
     result = []
     new_pos = @pos.zip(differential).map{|a| a.inject(:+)}
     until constraint_met?(new_pos)
+
       unless @board.empty?(new_pos)
         result << new_pos if @board[new_pos].color != @color
         break
       end
+
       result << new_pos
       new_pos = new_pos.zip(differential).map{|a| a.inject(:+)}
     end
@@ -37,19 +39,14 @@ class Piece
     moves.reject{|pos| move_into_check?(pos)}
   end
 
-  def move_diffs
-    class_name = self.class.to_s.downcase.to_sym
-    MOVING_DIR[class_name]
-  end
-
   def dup(board = nil)
     board ||= @board.dup
     self.class.new(@color, board, @pos)
   end
 
-  def move_into_check?(pos)
-    duplicate_board = @board.try(:dup)
-    duplicate_board.move!(@pos.try(:dup), pos)
+  def move_into_check?(end_pos)
+    duplicate_board = @board.dup
+    duplicate_board.move!(@pos.dup, end_pos)
     duplicate_board.in_check?(@color)
   end
 
