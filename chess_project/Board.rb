@@ -24,23 +24,10 @@ class Board
     @grid[pos[0]][pos[1]] = piece
   end
 
-  def in_check?(color)
-    # Find king
-    king_row = @grid.find do |row|
-      row.any?{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
-    end
-    king = king_row.find{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
-    # See if any oposing piece can move there
-    enemy_color = color == :white ? :black : :white
-    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.try(:pos)}
-  end
-
-  def all_pieces(color)
-    pieces = []
-    @grid.map do |row|
-      pieces += row.select{|piece| piece.try(:color) == color}
-    end
-    pieces
+  def move!(start, end_pos)
+    piece = self[start]
+    self[end_pos],  self[start] = piece, nil
+    piece.try(:pos=, end_pos)
   end
 
   def move(start, end_pos)
@@ -53,18 +40,27 @@ class Board
     self[pos].nil?
   end
 
-  def move!(start, end_pos)
-    piece = self[start]
-    self[end_pos] = piece
-    self[start] = nil
-    piece.pos = end_pos unless piece.nil?
+  def all_pieces(color)
+    pieces = []
+    @grid.map do |row|
+      pieces += row.select{|piece| piece.try(:color) == color}
+    end
+    pieces
+  end
+
+  def in_check?(color)
+    # Find king
+    king_row = @grid.find do |row|
+      row.any?{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
+    end
+    king = king_row.find{|piece| piece.try(:is_a?, King) && piece.try(:color) == color}
+    # See if any oposing piece can move there
+    enemy_color = color == :white ? :black : :white
+    all_pieces(enemy_color).map(&:moves).inject(:+).any?{|pos| pos == king.try(:pos)}
   end
 
   def checkmate?(color)
-    # If player in check.
-    # AND
-    # No pieces have valid moves.
-    in_check?(color) && all_pieces(color).all?{|piece| piece.valid_moves == []}
+   in_check?(color) && all_pieces(color).all?{|piece| piece.valid_moves == []}
   end
 
   def draw?
@@ -108,23 +104,14 @@ class Board
   end
 
   def setup
-    STARTING_POS.each_pair{|piece_class, positions| place_all(piece_class, positions)}
+    STARTING_POS.each_pair{|piece_class, positions| place_all_of_piece_type(piece_class, positions)}
   end
 
-  def place_all(piece_class, positions)
+  def place_all_of_piece_type(piece_class, positions)
     positions.each_with_index do |pos|
-      piece = get_piece_instance(piece_class, pos)
-      self[pos] = piece
+      color = pos[0] < N / 2 ? :black : :white
+      self[pos] = Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
     end
-  end
-
-  def get_piece_instance(piece_class, pos)
-    if pos[0] < N / 2
-      color = :black
-    else
-      color = :white
-    end
-    Kernel.const_get(piece_class.to_s.capitalize).new(color, self, pos)
   end
 
   def light_possible_moves(start)
