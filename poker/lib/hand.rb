@@ -12,6 +12,8 @@ class Hand
             :three_of_a_kind, :two_pair, :one_pair, :high_card
           ]
 
+  attr_reader :cards
+
   class << self
     def winner(hand_a, hand_b)
       a_ranking_points = RANKINGS.find_index(ranking(hand_a))
@@ -32,17 +34,17 @@ class Hand
   end
 
   def initialize(new_hand)
-    @hand = new_hand
+    @cards = new_hand
   end
 
   def high_card
-    return "A" if @hand.map(&:value_symbol).include? "A"
-    @hand.max{|card_a, card_b| VALUES[card_a.value_symbol] <=> VALUES[card_b.value_symbol]}.value_symbol
+    return "A" if @cards.map(&:value_symbol).include? "A"
+    @cards.max{|card_a, card_b| VALUES[card_a.value_symbol] <=> VALUES[card_b.value_symbol]}.value_symbol
   end
 
   def occurrences(n)
     pairs_symbols = Set.new
-    values = @hand.map{|card| card.value_symbol}
+    values = @cards.map{|card| card.value_symbol}
     values.each{|value| pairs_symbols << value if values.count(value) == n}
     pairs_symbols.to_a
   end
@@ -68,7 +70,7 @@ class Hand
   end
 
   def straight?
-    copy_hand = @hand.select{|card| card.value_symbol != "A"}
+    copy_hand = @cards.select{|card| card.value_symbol != "A"}
     sorted_copy = copy_hand.sort{|card_a, card_b| VALUES[card_a.value_symbol] <=> VALUES[card_b.value_symbol]}
 
     straight_without_a = sorted_copy.select.with_index do |card, i|
@@ -79,8 +81,8 @@ class Hand
   end
 
   def flush?
-    x_type = @hand.sample.type
-    @hand.all?{|card| card.type == x_type}
+    x_type = @cards.sample.type
+    @cards.all?{|card| card.type == x_type}
   end
 
   def straight_flush?
