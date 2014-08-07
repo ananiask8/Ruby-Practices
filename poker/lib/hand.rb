@@ -12,7 +12,7 @@ class Hand
             :three_of_a_kind, :two_pair, :one_pair, :high_card
           ]
 
-  attr_reader :cards
+  attr_accessor :cards
 
   class << self
     def winner(hand_a, hand_b)
