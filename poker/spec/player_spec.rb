@@ -4,7 +4,7 @@ require 'rspec'
 require 'player.rb'
 
 describe Player do
-  let(:player) {Player.new}
+  let(:player) {Player.new(20)}
 
   before(:each) do
     player.new_game(Hand.new([

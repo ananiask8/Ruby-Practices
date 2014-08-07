@@ -8,7 +8,8 @@ class Player
     @@count = 0
   end
 
-  def initialize
+  def initialize(pot)
+    @pot = pot
     @@count += 1
     @name = "Player ##{@@count}"
   end
@@ -17,6 +18,8 @@ class Player
     @active = true
     @hand = hand
     @bid = minimum_bid
+    @pot -= @bid
+    raise "Insufficient founds" if @pot < 0
   end
 
   def hand_size
@@ -25,6 +28,10 @@ class Player
 
   def add_card(card)
     @hand.cards << card
+  end
+
+  def add_to_pot(pot)
+    @pot += pot
   end
 
   def play
@@ -55,7 +62,10 @@ class Player
 
   def raise_bid
     input = read_input.to_i
-    @bid = input > @bid ? input : @bid
+    if input > @bid
+      @pot -= (input - @bid)
+      @bid = input
+    end
   end
 
   def playing?
