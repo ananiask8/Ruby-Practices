@@ -11,23 +11,27 @@ class Game
 
   def run
     until game_over?
-      @players.each{|player| player.new_game(@deck.hand, @min_bid)}
-      active_players = @players
+      active_players = capable_players.map{|player| player.new_game(@deck.deal(5), @min_bid)}
 
       previously_active_players_number = active_players.size
-      until previously_active_players_number == active_players_number
-        active_players.each(&:play)
+      active_players_number = 1.0/0.0
+      # until previously_active_players_number == active_players_number
+      #   active_players.each(&:play)
 
-        active_players.reject!{|player| player.pot < @min_bid || !player.playing?}
-        active_players_number = active_players.size
-      end
+      #   active_players.reject!{|player| player.pot < @min_bid || !player.playing?}
+      #   active_players_number = active_players.size
+      # end
     end
 
     winner
   end
 
+  def capable_players
+    @players.select{|player| player.pot > @min_bid}
+  end
+
   def game_over?
-    @players.reject{|player| player.pot < @min_bid}.size == 1
+    capable_players.size == 1
   end
 
   def winner
