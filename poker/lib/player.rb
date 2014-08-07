@@ -2,7 +2,7 @@ require 'hand.rb'
 
 class Player
 
-  attr_reader :bid, :name
+  attr_reader :bid, :name, :pot
 
   class << self
     @@count = 0
