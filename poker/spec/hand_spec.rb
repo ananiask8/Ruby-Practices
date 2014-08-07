@@ -135,5 +135,18 @@ describe Hand do
                         ])
       expect(Hand.winner(hand_a, hand_b)).to be hand_b
     end
+
+    it "returns nil if the result is a draw" do
+      hand_a = Hand.new([
+                          Card.new(1, :diamond), Card.new(5, :diamond), Card.new(3, :diamond),
+                          Card.new(4, :diamond), Card.new(2, :diamond)
+                        ])
+
+      hand_b = Hand.new([
+                          Card.new(1, :diamond), Card.new(5, :diamond), Card.new(3, :diamond),
+                          Card.new(4, :diamond), Card.new(2, :diamond)
+                        ])
+      expect(Hand.winner(hand_a, hand_b)).to be nil
+    end
   end
 end

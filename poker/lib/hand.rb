@@ -14,12 +14,16 @@ class Hand
 
   class << self
     def winner(hand_a, hand_b)
-      if RANKINGS.find_index(ranking(hand_a)) == RANKINGS.find_index(ranking(hand_b))
+      a_ranking_points = RANKINGS.find_index(ranking(hand_a))
+      b_ranking_points = RANKINGS.find_index(ranking(hand_b))
+
+      if a_ranking_points == b_ranking_points
+        return nil if VALUES[hand_a.high_card].last == VALUES[hand_b.high_card].last
         return VALUES[hand_a.high_card].last < VALUES[hand_b.high_card].last ? hand_a : hand_b
         #used last because of A (to take 14)
       end
 
-      RANKINGS.find_index(ranking(hand_a)) < RANKINGS.find_index(ranking(hand_b)) ? hand_a : hand_b
+      a_ranking_points < b_ranking_points ? hand_a : hand_b
     end
 
     def ranking(hand)
