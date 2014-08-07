@@ -2,12 +2,13 @@
 # require 'rubygems'
 
 class Card
-  SYMBOLS = {:spade => '♠', :heart => '♥', :diamond => '♦', :club => '♣'}
-  attr_reader :value, :type, :symbol
+  TYPES = {:spade => '♠', :heart => '♥', :diamond => '♦', :club => '♣'}
+  VALUES_SYMBOLS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+  attr_reader :value_symbol, :type, :type_symbol
 
   def initialize(value, type)
-    @value = value
     @type = type
-    @symbol = SYMBOLS[type.to_sym]
+    @type_symbol = TYPES[type.to_sym]
+    @value_symbol = VALUES_SYMBOLS[value - 1]
   end
 end

@@ -5,12 +5,12 @@ require 'rspec'
 require 'card.rb'
 
 describe Card do
-  subject(:card) {Card.new(3, :diamond)}
+  subject(:card) {Card.new(1, :diamond)}
 
-  describe '#value' do
-    it { should respond_to :value}
-    it "returns correct value" do
-      expect(card.value).to eq 3
+  describe '#value_symbol' do
+    it {should respond_to :value_symbol}
+    it "returns correct value symbol" do
+      expect(card.value_symbol).to eq 'A'
     end
   end
 
@@ -21,10 +21,10 @@ describe Card do
     end
   end
 
-  describe '#symbol' do
+  describe '#type_symbol' do
     it {should respond_to :symbol}
-    it "returns correct symbol" do
-      expect(card.symbol).to eq '♦'
+    it "returns correct type symbol" do
+      expect(card.type_symbol).to eq '♦'
     end
   end
 end
